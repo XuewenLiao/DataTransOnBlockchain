@@ -1,0 +1,27 @@
+@url=http://localhost:4000
+@json=Content-Type: application/json
+
+###
+ get {{url}}/axiostest/getdata
+
+###
+post {{url}}/axiostest/postdata
+{{json}}
+
+{
+    "dataType": "json",
+    "dataContent": "axios post success"
+}
+
+###
+post {{url}}/axiostest/inserttodb
+{{json}}
+
+{
+    "username": "u3",
+    "password": "p3",
+    "location": "长沙3"
+}
+
+###
+get {{url}}/axiostest/findindb
