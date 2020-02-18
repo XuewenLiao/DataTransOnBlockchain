@@ -18,10 +18,30 @@ post {{url}}/axiostest/inserttodb
 {{json}}
 
 {
-    "username": "u3",
-    "password": "p3",
-    "location": "长沙3"
+    "username": "u6",
+    "password": "p6",
+    "location": "长沙6"
 }
 
 ###
 get {{url}}/axiostest/findindb
+
+###
+get {{url}}/axiostest/addipfs
+
+###
+post {{url}}/axiostest/postaddipfs
+{{json}}
+
+{
+    "path": "path1",
+    "content": "666"
+}
+
+###
+get {{url}}/datacotrol/findallindb
+
+###
+post {{url}}/datacotrol/allinserttodb
+{{json}}
+

@@ -1,23 +1,33 @@
 import React, { Component } from "react";
 import { Table, Button } from 'antd';
-import { findData } from '../methodTool'
+import { getOrigData } from '../methodTool'
 
 
 const columns = [
   {
-    title: 'Username',
-    dataIndex: 'username',
+    title: 'User Address',
+    dataIndex: 'uaddress',
     width: 100,
   },
   {
-    title: 'Password',
-    dataIndex: 'password',
+    title: 'Data Date',
+    dataIndex: 'datadate',
     width: 80,
   },
   {
-    title: 'Location',
-    dataIndex: 'location',
-    width: 200,
+    title: 'Collection Place',
+    dataIndex: 'dataplace',
+    width: 80,
+  },
+  {
+    title: 'Data Hash',
+    dataIndex: 'ipfsdatahash',
+    width: 100,
+  },
+  {
+    title: 'Sell status',
+    dataIndex: 'hassell',
+    width: 100,
   },
 ];
 
@@ -38,17 +48,26 @@ class Home extends React.Component {
     //后台拿数据
     this.setState({ loading: true });
     // ajax request after empty completing
-    findData().then(res => {
+    getOrigData().then(res => {
 
-        this.setState({
-          data: [...res, data.map(val => {
-            // val.key = val.id;
-            return val;
-          })],
-        
+      //设置卖出状态
+      for (var i in res) {
+        if (res[i].hassell == false) {
+          res[i].hassell = 'Unsold'
+        } else {
+          res[i].hassell = 'Sold out'
+        }
+      }
+
+      this.setState({
+        data: [...res, data.map(val => {
+          return val
+        })],
+
         selectedRowKeys: [],
         loading: false,
       });
+
     })
   };
 

@@ -77,15 +77,15 @@ class App extends Component {
               <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
                 <Menu.Item key="1">
                   <Icon type="user" />
-                  <span>  <Link to="/">首页</Link></span>
+                  <span>  <Link to="/">Home</Link></span>
                 </Menu.Item>
                 <Menu.Item key="2">
                   <Icon type="video-camera" />
-                  <span><Link to="/news">新闻</Link></span>
+                  <span><Link to="/news">Mine</Link></span>
                 </Menu.Item>
                 <Menu.Item key="3">
                   <Icon type="upload" />
-                  <span><Link to="/product">商品</Link></span>
+                  <span><Link to="/uploadmanage">Upload manage</Link></span>
                 </Menu.Item>
               </Menu>
             </Sider>

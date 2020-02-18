@@ -1,6 +1,6 @@
 import Home from '../views/Home';
 import News from '../views/News';
-import Product from '../views/Product';
+import UploadManage from '../views/UploadManage';
 let routes = [
     {
       path: "/",
@@ -12,8 +12,8 @@ let routes = [
       component: News
     },
     {
-      path: "/product",
-      component: Product
+      path: "/uploadmanage",
+      component: UploadManage
     }
   ];
 

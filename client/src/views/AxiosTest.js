@@ -46,9 +46,9 @@ class AxiosTest extends Component {
                 'Content-Type': 'application/json'
             },
             data: {
-                "username": "u3",
+                "username": "u4",
                 "password": "p3",
-                "location": "长沙"
+                "location": "长沙3"
             }
         })
             .then(function (response) {
