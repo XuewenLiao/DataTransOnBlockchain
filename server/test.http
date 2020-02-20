@@ -45,3 +45,7 @@ get {{url}}/datacotrol/findallindb
 post {{url}}/datacotrol/allinserttodb
 {{json}}
 
+###
+post {{url}}/datacotrol/calcuqod
+{{json}}
+

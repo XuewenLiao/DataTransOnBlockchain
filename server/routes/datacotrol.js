@@ -1,3 +1,4 @@
+var {data,calcuQod} = require('./functiontools.js') 
 const { UserCollectData } = require('../model/models')
 var express = require('express');
 var router = express.Router();
@@ -44,6 +45,14 @@ router.post('/allinserttodb', async (req, res) => {
   res.send(testuser);
 });
 
+//算qod
+router.post('/calcuqod',async (req, res) => {
+    var  alldata = data;
+    calcuQod(alldata);
+    // console.log("data==",alldata);
+    
+
+});
 
 
 
