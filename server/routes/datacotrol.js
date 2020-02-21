@@ -1,4 +1,4 @@
-var {data,calcuQod} = require('./functiontools.js') 
+var {data,calcuQod,qodArray,calcuReward} = require('./functiontools.js') 
 const { UserCollectData } = require('../model/models')
 var express = require('express');
 var router = express.Router();
@@ -48,12 +48,19 @@ router.post('/allinserttodb', async (req, res) => {
 //算qod
 router.post('/calcuqod',async (req, res) => {
     var  alldata = data;
-    calcuQod(alldata);
+    qodArray = calcuQod(alldata);
     // console.log("data==",alldata);
     
 
 });
 
+//算激励金额
+router.post('/calcureward',async (req, res) => {
+  var  theqodArray = qodArray;
+  var rewardArray = calcuReward(theqodArray,60);
+  console.log("rewardArray==",JSON.stringify(rewardArray))
+  
+});
 
 
 module.exports = router;

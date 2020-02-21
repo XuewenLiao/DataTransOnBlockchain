@@ -49,3 +49,6 @@ post {{url}}/datacotrol/allinserttodb
 post {{url}}/datacotrol/calcuqod
 {{json}}
 
+###
+post {{url}}/datacotrol/calcureward
+{{json}}

@@ -7,6 +7,82 @@ var data = [
     { "uaddress": "0x276ea10526355d106a1abb3853b41aa9adc9af54", "datadate": "2019-05-09 09:35:00", "dataplace": "p6", "datacontent": { "placedata": 66, "collectdata": 72 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "0x33d8de600a16d3e417eb807729f74207156d3b8a", "datadate": "2019-05-09 09:35:00", "dataplace": "p6", "datacontent": { "placedata": 66, "collectdata": 60 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "0xc1d7f6b541800b10b2e7c4f686ae97f89bbed80e", "datadate": "2019-05-09 09:35:00", "dataplace": "p6", "datacontent": { "placedata": 66, "collectdata": 80 }, "ipfsdatahash": "", "hassell": false }
 ];
 
+var qodArray = []
+
+/*功能：计算激励金额
+*参数：每个人对应的所有点的qod集合,买家发布的总金额
+ 返回值：，rewardArray形如：
+[
+    {
+        uaddress:null
+        reward:null
+    },...
+]
+
+算法总体步骤：
+    1、算每个点初始奖金值：initPointMoney = totalmoney/datapointnum
+    2、算每个人在每个点的权重：wi = initPointMoney * [(Qod(si) - a)+1] (预计qod在a附近，暂且不要)
+                         或：wi = initPointMoney * Qod(si)
+    3、算每个人在每个点的总权重：workerTotalweight_i = Sum(wi)
+                             workertotalweightmap[workerid] = workerTotalweight_i
+    4、算总权重：totalweight = Sum（workerweight_i）
+    5、算每个人的奖金额：workerrj[workerid] = (totalmoney/totalweight) * workerTotalweight_i
+*/
+function calcuReward(qodArray,totalReward) {
+    //统计总共多少个点（原则上每个人采了一样多的点，实际以采集最多的点个数为准）
+    var dataPointNum = 0
+    for (var i in qodArray) {
+        if (qodArray[i].qod.length > dataPointNum) {
+            dataPointNum = qodArray[i].qod.length
+        }
+    }
+
+    var initPointMoney = totalReward/dataPointNum
+
+    var wWeightArray = []
+    var totalWeight = 0
+    for (var i in qodArray) {
+        var wi = {}
+        var workerTotalweight = 0
+        wi.uaddress = qodArray[i].uaddress
+        for (var qi in qodArray[i].qod) {
+            var eachWeight = qodArray[i].qod[qi].qodcontent * initPointMoney
+            workerTotalweight = workerTotalweight + eachWeight
+        }
+        totalWeight = totalWeight + workerTotalweight
+        wi.workerTotalweight = workerTotalweight
+        wWeightArray.push(wi)
+        console.log("wi==",JSON.stringify(wi))
+    }
+    console.log("wWeightArray==",wWeightArray)
+
+    //算每个人的奖金额
+    var rewardArray = []
+    for (var i in wWeightArray) {
+        var wReward = {}
+        var workerTotalweight = wWeightArray[i].workerTotalweight
+        var reward = (totalReward/totalWeight) * workerTotalweight
+
+        wReward.uaddress = wWeightArray[i].uaddress
+        wReward.reward = Math.round(reward)
+        rewardArray.push(wReward)
+    }
+    // console.log("rewardArray==",JSON.stringify(rewardArray))
+    return rewardArray
+
+}
+
+
+/*功能：计算qod
+*参数：用户选择的数据
+ 返回值：每个人对应的所有点的qod集合，qodArray形如：
+[
+    {
+        uaddress:null
+        qod:[{ dataplace:null,qodcontent:null},...]
+    }
+]
+*/
 function calcuQod(alldata) {
     var wtopSummary = []    //人-->采集点集合
     var ptowSummary = []    //采集点-->人的集合
@@ -21,21 +97,20 @@ function calcuQod(alldata) {
     //三、计算Qod
     qodArray = getQod(ptowSummary,uiArray)
     console.log('qodArray==', JSON.stringify(qodArray))
-
-    // console.log('wtopSummaryGlobal', wtopSummary)
-    // console.log('ptowSummaryGlobal', ptowSummary)
-  
+    return qodArray
 }
 
 function getQod(ptowSummary,uiArray) {
     var qodArray = []
     
-    var qodMap = {}
+    // var qodMap = {}
+    var eachQodArray = [] //存每个点的每个人的qod
     for (var i in ptowSummary) {    //遍历每个点
         var errSum = 0
         var errToPAArray = []
        
-        var qod = []
+        
+        
         for (var pIndex in ptowSummary[i].addressArry) { //遍历当前点的每个人
             
             var errToPA = {}
@@ -61,18 +136,48 @@ function getQod(ptowSummary,uiArray) {
 
         }
       
+        //算每个人在该点的qod，用eachQodArray暂存
         for ( var i in errToPAArray) {
             var eachQod = {}
 
             eachQod.qodcontent = ((errSum - errToPAArray[i].err) / errSum).toFixed(2)
             eachQod.dataplace = errToPAArray[i].dataplace
-            qod.push(eachQod)
-            qodMap.uaddress = errToPAArray[i].uaddress
-            qodMap.qod = qod
+            eachQod.uaddress = errToPAArray[i].uaddress
+            eachQodArray.push(eachQod)
+            // qod.push(eachQod)
+            // qodMap.uaddress = errToPAArray[i].uaddress
+            // qodMap.qod = qod
         }      
-        qodArray.push(qodMap)
+        // qodArray.push(qodMap)       
     }
     
+
+    //统计对于每个人，在所有点的qod
+    var tempwData = JSON.parse(JSON.stringify(eachQodArray)) //深拷贝
+    for (var i in eachQodArray) {
+        var pToqod = {}
+        if (tempwData[i].uaddress == null) {
+            continue
+        }
+        pToqod.uaddress = eachQodArray[i].uaddress
+        var qod = []
+        for (var j in eachQodArray) {
+            if ( eachQodArray[j].uaddress == eachQodArray[i].uaddress) {
+                var eachQod = {}
+                eachQod.dataplace = eachQodArray[j].dataplace
+                eachQod.qodcontent = eachQodArray[j].qodcontent
+                qod.push(eachQod)
+
+                tempwData[j].uaddress = null
+            }else{
+                continue
+            }
+        }
+        pToqod.qod = qod
+        qodArray.push(pToqod)
+
+    }
+
     return qodArray
 
 }
@@ -203,4 +308,4 @@ function calcuBj(alldata,wtopSummary) {
     return bjArray
 }
 
-module.exports = { data, calcuQod }
+module.exports = { data, calcuQod, qodArray, calcuReward }
