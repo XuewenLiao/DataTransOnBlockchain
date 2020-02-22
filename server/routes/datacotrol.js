@@ -1,4 +1,4 @@
-var {data,calcuQod,qodArray,calcuReward} = require('./functiontools.js') 
+var { data, calcuQod, qodArray, calcuReward } = require('./functiontools.js')
 const { UserCollectData } = require('../model/models')
 var express = require('express');
 var router = express.Router();
@@ -34,7 +34,7 @@ router.post('/updatehashdata', async (req, res) => {
 router.post('/allinserttodb', async (req, res) => {
 
   var testData = [{ "uaddress": "u1", "datadate": "d1", "dataplace": "p1", "datacontent": { "placedata": 63.0, "collectdata": 75.2 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "u2", "datadate": "d2", "dataplace": "p2", "datacontent": { "placedata": 63.0, "collectdata": 63.0 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "u3", "datadate": "d3", "dataplace": "p3", "datacontent": { "placedata": 63.0, "collectdata": 80.2 }, "ipfsdatahash": "", "hassell": false }];
-  UserCollectData.insertMany(testData, function (error, docs) {
+  UserCollectData.insertMany(data, function (error, docs) {
     if (error) {
       console.error("error", error)
     } else {
@@ -45,21 +45,42 @@ router.post('/allinserttodb', async (req, res) => {
   res.send(testuser);
 });
 
-//算qod
-router.post('/calcuqod',async (req, res) => {
-    var  alldata = data;
-    qodArray = calcuQod(alldata);
-    // console.log("data==",alldata);
-    
+// //算qod
+// router.post('/calcuqod',async (req, res) => {
+//     var  alldata = data;
+//     qodArray = calcuQod(alldata);
+//     // console.log("data==",alldata);
 
+
+// });
+
+//算qod
+router.post('/calcuqod', async (req, res) => {
+  //接收前端id集合
+  var dataIdArray = req.body.data
+  // var dataArray = []
+  //查库:Model.find({ _id: { $in: ['aID', 'bID'] } });
+  UserCollectData.find({ _id: { $in: dataIdArray } }, function (err, result) {
+    if (err) {
+      res.send({ result: 'FindDbByIdFail' })
+    } else {
+      //算qod
+      var alldata = result;
+      qodArray = calcuQod(alldata);
+      res.send(qodArray)
+      console.log("data==", alldata);
+    }
+  })
+ 
 });
 
 //算激励金额
-router.post('/calcureward',async (req, res) => {
-  var  theqodArray = qodArray;
-  var rewardArray = calcuReward(theqodArray,60);
-  console.log("rewardArray==",JSON.stringify(rewardArray))
-  
+router.post('/calcureward', async (req, res) => {
+  var theqodArray = qodArray;
+  var rewardValue = req.body.data
+  var rewardArray = calcuReward(theqodArray, rewardValue);
+  console.log("rewardArray==", JSON.stringify(rewardArray))
+  res.send(rewardArray)
 });
 
 

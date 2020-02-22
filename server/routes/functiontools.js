@@ -28,7 +28,7 @@ var qodArray = []
     4、算总权重：totalweight = Sum（workerweight_i）
     5、算每个人的奖金额：workerrj[workerid] = (totalmoney/totalweight) * workerTotalweight_i
 */
-function calcuReward(qodArray,totalReward) {
+function calcuReward(qodArray, totalReward) {
     //统计总共多少个点（原则上每个人采了一样多的点，实际以采集最多的点个数为准）
     var dataPointNum = 0
     for (var i in qodArray) {
@@ -37,7 +37,7 @@ function calcuReward(qodArray,totalReward) {
         }
     }
 
-    var initPointMoney = totalReward/dataPointNum
+    var initPointMoney = totalReward / dataPointNum
 
     var wWeightArray = []
     var totalWeight = 0
@@ -52,16 +52,16 @@ function calcuReward(qodArray,totalReward) {
         totalWeight = totalWeight + workerTotalweight
         wi.workerTotalweight = workerTotalweight
         wWeightArray.push(wi)
-        console.log("wi==",JSON.stringify(wi))
+        console.log("wi==", JSON.stringify(wi))
     }
-    console.log("wWeightArray==",wWeightArray)
+    console.log("wWeightArray==", wWeightArray)
 
     //算每个人的奖金额
     var rewardArray = []
     for (var i in wWeightArray) {
         var wReward = {}
         var workerTotalweight = wWeightArray[i].workerTotalweight
-        var reward = (totalReward/totalWeight) * workerTotalweight
+        var reward = (totalReward / totalWeight) * workerTotalweight
 
         wReward.uaddress = wWeightArray[i].uaddress
         wReward.reward = Math.round(reward)
@@ -88,46 +88,48 @@ function calcuQod(alldata) {
     var ptowSummary = []    //采集点-->人的集合
 
     //一、算bj
-    bjArray = calcuBj(alldata,wtopSummary)
+    bjArray = calcuBj(alldata, wtopSummary)
     console.log('bjArray==', JSON.stringify(bjArray))
     //二、算每个点的真实值ui
-    uiArray = calcuUi(alldata, ptowSummary ,bjArray)
+    uiArray = calcuUi(alldata, ptowSummary, bjArray)
     console.log('uiArray==', JSON.stringify(uiArray))
 
     //三、计算Qod
-    qodArray = getQod(ptowSummary,uiArray)
+    qodArray = getQod(ptowSummary, uiArray)
     console.log('qodArray==', JSON.stringify(qodArray))
     return qodArray
 }
 
-function getQod(ptowSummary,uiArray) {
+function getQod(ptowSummary, uiArray) {
     var qodArray = []
-    
+
     // var qodMap = {}
     var eachQodArray = [] //存每个点的每个人的qod
     for (var i in ptowSummary) {    //遍历每个点
         var errSum = 0
         var errToPAArray = []
-       
-        
-        
+
+
+
         for (var pIndex in ptowSummary[i].addressArry) { //遍历当前点的每个人
-            
+
             var errToPA = {}
             var collectData = ptowSummary[i].addressArry[pIndex].collectdata
             var truth = 0
             for (var uIndex in uiArray) {
                 if (uiArray[uIndex].dataplace == ptowSummary[i].placeName) {
                     truth = uiArray[uIndex].ui
-                }else{
+                } else {
                     continue
                 }
-            } 
+            }
 
             //对于每个点，求每个人采集值与这个点真实值的误差
             var eatchErr = Math.abs(collectData - truth)
             errToPA.uaddress = ptowSummary[i].addressArry[pIndex].uaddress
             errToPA.dataplace = ptowSummary[i].placeName
+            errToPA.collectdata = collectData
+            errToPA.truth = truth
             errToPA.err = eatchErr
             //对当前点所有误差求和
             errSum = errSum + eatchErr
@@ -135,22 +137,37 @@ function getQod(ptowSummary,uiArray) {
             errToPAArray.push(errToPA)
 
         }
-      
+
         //算每个人在该点的qod，用eachQodArray暂存
-        for ( var i in errToPAArray) {
+        for (var i in errToPAArray) {
             var eachQod = {}
 
-            eachQod.qodcontent = ((errSum - errToPAArray[i].err) / errSum).toFixed(2)
+            if (errToPAArray[i].err == errSum) {
+                if (errSum == 0) {  //说明此人在当前点采集的误差为0
+                    eachQod.qodcontent = (1).toFixed(2)
+                } else { //说明当前点只有一个人采：errSum == errToPAArray[i].err != 0
+                    if (errToPAArray[i].collectdata > errToPA.truth) {
+                        eachQod.qodcontent = (errToPAArray[i].truth / errToPAArray[i].collectdata).toFixed(2)
+                    }else {
+                        eachQod.qodcontent = (errToPAArray[i].collectdata / errToPAArray[i].truth).toFixed(2)
+                    }
+                    
+                }
+
+            } else {
+                eachQod.qodcontent = ((errSum - errToPAArray[i].err) / errSum).toFixed(2)
+            }
+
             eachQod.dataplace = errToPAArray[i].dataplace
             eachQod.uaddress = errToPAArray[i].uaddress
             eachQodArray.push(eachQod)
             // qod.push(eachQod)
             // qodMap.uaddress = errToPAArray[i].uaddress
             // qodMap.qod = qod
-        }      
+        }
         // qodArray.push(qodMap)       
     }
-    
+
 
     //统计对于每个人，在所有点的qod
     var tempwData = JSON.parse(JSON.stringify(eachQodArray)) //深拷贝
@@ -162,14 +179,14 @@ function getQod(ptowSummary,uiArray) {
         pToqod.uaddress = eachQodArray[i].uaddress
         var qod = []
         for (var j in eachQodArray) {
-            if ( eachQodArray[j].uaddress == eachQodArray[i].uaddress) {
+            if (eachQodArray[j].uaddress == eachQodArray[i].uaddress) {
                 var eachQod = {}
                 eachQod.dataplace = eachQodArray[j].dataplace
                 eachQod.qodcontent = eachQodArray[j].qodcontent
                 qod.push(eachQod)
 
                 tempwData[j].uaddress = null
-            }else{
+            } else {
                 continue
             }
         }
@@ -182,8 +199,27 @@ function getQod(ptowSummary,uiArray) {
 
 }
 
-function calcuUi(alldata, ptowSummary ,bjArray) {
-    // var ptowSummary = []    //采集点-->人的集合
+
+/*功能：计算每点的真实值ui                                   
+*参数：用户选择的数据，采集点对应的所有人数据
+ 返回值：每个点对应ui集合，uiArray形如：
+[
+    {
+        dataplace:null
+        ui:null
+    }
+]
+
+/* ptowSummary ：采集点-->人的集合，形如：
+[
+    {
+        placeName:null
+        addressArray:[{ uddress:null,collectdata:bull,bj:null},...]
+    }
+]
+*/
+function calcuUi(alldata, ptowSummary, bjArray) {
+
     //2 算每个点的真实值--ui
     //2.1 统计每个点都有哪些人采了
     var tempwData = JSON.parse(JSON.stringify(alldata)) //深拷贝
@@ -220,12 +256,12 @@ function calcuUi(alldata, ptowSummary ,bjArray) {
     }
 
     console.log('ptowSummary', ptowSummary)
-    
+
     //2.2 算ui
     var uiArray = []
     for (var i in ptowSummary) {
         var uiContent = {}
-        
+
         var uiresult = 0
         for (var addIndex in ptowSummary[i].addressArry) {
             //1、每个人在i点采集的值 - 这个人的偏差bj
@@ -242,14 +278,31 @@ function calcuUi(alldata, ptowSummary ,bjArray) {
         uiContent.ui = uiresult
         uiArray.push(uiContent)
         console.log('uiContent==', JSON.stringify(uiContent))
-    }  
-    return uiArray  
+    }
+    return uiArray
 
 }
 
+/*功能：计算每个人的偏差bj                                   
+*参数：用户选择的数据，人对应的采集点数据
+ 返回值：每个人对应bj集合，bjArray形如：
+[
+    {
+        uaddress:null
+        bj:null
+    }
+]
 
-function calcuBj(alldata,wtopSummary) {
-    // var wtopSummary = []    //人-->采集点集合
+/* wtopSummary ：人-->采集点集合，形如：
+[
+    {
+        uaddress:null
+        place:[{ dataplace:null,datacontent:[]},...]
+    }
+]
+*/
+function calcuBj(alldata, wtopSummary) {
+
     //1 算每个人的偏差--bj
     //1.1 统计每个人采了哪些点
     var tempwData = JSON.parse(JSON.stringify(alldata)) //深拷贝
