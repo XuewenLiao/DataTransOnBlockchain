@@ -12,6 +12,7 @@ class UploadManage extends React.Component {
     this.state = {
       isSuccess: null,
       origData: null,
+      loading: false,
 
     }
   }
@@ -33,12 +34,17 @@ class UploadManage extends React.Component {
     })
 
   };
+  enterLoading = () => {
+    this.setState({ loading: true });
+  };
 
 
 
   uploadIpfs = async (origData) => {
     console.log(" uploadorigData==", origData);
     console.log(" uploadtype==", typeof (origData));
+
+    this.enterLoading()
 
     for (var i in origData) {
 
@@ -58,19 +64,21 @@ class UploadManage extends React.Component {
       }
     }
 
-    this.setState({ isSuccess: "上传成功" })
+    this.setState({ isSuccess: "上传成功" ,loading: false})
     console.log("newData==", origData)
-
+    
     //发送数据给后台
       sendData(origData).then(res => {
         console.log("sendRes==", res.result)
       })
+
   }
 
 
   render() {
     return <div style={{ textAlign: 'center' }}>
-      <Button type="primary" onClick={() => this.uploadIpfs(this.state.origData)}>上传至IPFS</Button>
+      {/* <Button type="primary" onClick={() => this.uploadIpfs(this.state.origData)}>上传至IPFS</Button> */}
+      <Button type="primary" loading={this.state.loading} onClick={() => this.uploadIpfs(this.state.origData)}>UploadToIpfs</Button>
       <p>上传状态： <strong>{JSON.stringify(this.state.isSuccess)}</strong></p>
     </div>
   }

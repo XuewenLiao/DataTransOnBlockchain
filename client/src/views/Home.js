@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import { Table, Button } from 'antd';
-import { getOrigData } from '../methodTool'
+import { Table, Button, Form, Input, Icon } from 'antd';
+import { getOrigData, calcuQod, calcuRewards } from '../methodTool'
 
-
+const FormItem = Form.Item
 const columns = [
   {
     title: 'User Address',
@@ -37,6 +37,7 @@ class Home extends React.Component {
   state = {
     selectedRowKeys: [], // Check here to configure the default column
     loading: false,
+    rewardValue: '',
     data: []
   };
 
@@ -71,11 +72,44 @@ class Home extends React.Component {
     })
   };
 
+  uploadToServer = () => {
+    var dataIdArray = []
+    var selectedRows = this.state.selectedRowKeys
+    for (var i in selectedRows) {
+      var data = this.state.data
+      dataIdArray.push(data[selectedRows[i]]._id)
+    }
+    console.log("datasArray==", dataIdArray)
+
+    calcuQod(dataIdArray).then(res => {
+      console.log("res==", res)
+
+      console.log("qodData==", res);
+      console.log("type==", typeof (res));
+      alert(JSON.stringify(res))
+    })
+
+  }
+
+  calcuReward = () => {
+    calcuRewards(this.state.rewardValue).then(res => {
+      console.log("reward==", res);
+      console.log("type==", typeof (res));
+      alert(JSON.stringify(res))
+    })
+  }
+
+  onValueChange = (event) => {
+    this.setState({rewardValue : event.target.value})
+    console.log("eventrewardValue==",event.target.value)
+  }
+
   onSelectChange = selectedRowKeys => {
     console.log('selectedRowKeys changed: ', selectedRowKeys);
     this.setState({ selectedRowKeys });
   };
 
+ 
 
   render() {
     const { loading, selectedRowKeys } = this.state;
@@ -87,13 +121,25 @@ class Home extends React.Component {
     return (
       <div>
         <div style={{ marginBottom: 16 }}>
-          <Button type="primary" onClick={this.start} disabled={!hasSelected} loading={loading}>
-            Reload
+          <Button type="primary" onClick={this.uploadToServer} disabled={!hasSelected} loading={loading}>
+          CalcuQod
           </Button>
+
           <span style={{ marginLeft: 8 }}>
             {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
           </span>
+          <span style={{ float: "right" }}>
+            <Button type="primary" onClick={this.calcuReward} disabled={!hasSelected} loading={loading}>
+              CalcuReward
+          </Button>
+          </span>
+          <span style={{ float: "right" }}>
+            <FormItem>
+              <Input size="default size" prefix={<Icon type="pay-circle" style={{fontSize: 15,textAlign:"center"}} />} placeholder="Enter incentive amount" value={this.state.rewardValue} onChange={this.onValueChange}/>
+            </FormItem>
+          </span>
         </div>
+
         <Table rowSelection={rowSelection} columns={columns} dataSource={this.state.data} />
       </div>
     );
