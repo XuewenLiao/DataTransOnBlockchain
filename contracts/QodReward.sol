@@ -41,6 +41,10 @@ contract QodReward {
 
     event SaveIpfs(string[] ipfsDataHashArry,address proAddress,bool isSaveSuccess);
     event SaveQod(address proAddress,string score,bool isSelf);
+    event PublishMoney(uint tMoney);
+    event CalcuRewardByProvider(address proAddress,uint money,bool isSelf);
+    event CalcuRewardByConsumer(address proAddress,uint money);
+    event ProviderVerifiedReward(address proAddress,uint rewardVote,bool isAgree);
     
     modifier etherProvided() {
         require(msg.value > 0, "Need ether to be greater than 0");
@@ -162,10 +166,11 @@ contract QodReward {
     //     return qod;
     // }
     
-    // //7.2 公布奖金
-    // function publishTotalMoney(uint tMoney) public {
-    //     totalMoney = tMoney;
-    // }
+    //7.2 公布奖金
+    function publishTotalMoney(uint tMoney) public {
+        totalMoney = tMoney;
+        emit PublishMoney(tMoney);
+    }
     
     // //8、计算激励金额
     // //8.1.1 provider函数:查在网络中公布的总金额
@@ -173,19 +178,24 @@ contract QodReward {
     //     return totalMoney;
     // }
 
-    // //8.1.2 provider函数:计算自己和其他人的奖金额
-    // function calcuRewardByProvider(address proAddress,uint money) public {
-    //     if (proAddress == msg.sender) {
-    //         dataProviders[proAddress].pmoney = money;
-    //     }else{
-    //         dataProviders[msg.sender].otherDataProvider[proAddress].pmoney = money;
-    //     }
-    // }
+    //8.1.2 provider函数:计算自己和其他人的奖金额
+    function calcuRewardByProvider(address proAddress,uint money) public {
+        bool isSelf = false;
+        if (proAddress == msg.sender) {
+            dataProviders[proAddress].pmoney = money;
+            isSelf = true;
+        }else{
+            dataProviders[msg.sender].otherDataProvider[proAddress].pmoney = money;
+            isSelf = false;
+        }
+        emit CalcuRewardByProvider(proAddress,money,isSelf);
+    }
     
-    // //8.2 consumer函数：计算每个provider的奖金额
-    // function calcuRewardByConsumer(address proAddress,uint money) public {
-    //     moneyOfProvider[proAddress] = money;
-    // }
+    //8.2 consumer函数：计算每个provider的奖金额
+    function calcuRewardByConsumer(address proAddress,uint money) public {
+        moneyOfProvider[proAddress] = money;
+        emit CalcuRewardByConsumer(proAddress,money);
+    }
     
     // //9、验证激励金额
     // //9.1 provider函数
@@ -211,28 +221,31 @@ contract QodReward {
     // //     return true;
     // // }
     
-    //  function providerVerifiedReward() public returns (bool isVerifiedSuccess,string memory allFailProAddress) {
+     function providerVerifiedReward() public {
+        bool isAgree = true;
+
+        uint otherProviderSum = dataProviders[msg.sender].otherProAddressArry.length;
+        otherProAddress = dataProviders[msg.sender].otherProAddressArry;
+        for (uint i = 0;i < otherProviderSum;i++) {
+            if (keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].pmoney)) == 
+                keccak256(abi.encodePacked(dataProviders[otherProAddress[i]].pmoney)) && 
+                keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].pmoney)) == 
+                keccak256(abi.encodePacked(moneyOfProvider[otherProAddress[i]])) && 
+                keccak256(abi.encodePacked(dataProviders[msg.sender].pmoney)) == 
+                keccak256(abi.encodePacked(moneyOfProvider[msg.sender]))) {
+                dataProviders[msg.sender].rewardVote = 1;    
+                continue;
+            }else{
+                // allFailProAddress = addressToString(otherProAddress[i]).toSlice().concat("+".toSlice());
+                dataProviders[msg.sender].rewardVote = 0;
+                isAgree = false;
+                break;
+            }
+            
+        }
         
-    //     uint otherProviderSum = dataProviders[msg.sender].otherProAddressArry.length;
-    //     otherProAddress = dataProviders[msg.sender].otherProAddressArry;
-    //     for (uint i = 0;i < otherProviderSum;i++) {
-    //         if (keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].pmoney)) == 
-    //             keccak256(abi.encodePacked(dataProviders[otherProAddress[i]].pmoney)) && 
-    //             keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].pmoney)) == 
-    //             keccak256(abi.encodePacked(moneyOfProvider[otherProAddress[i]])) && 
-    //             keccak256(abi.encodePacked(dataProviders[msg.sender].pmoney)) == 
-    //             keccak256(abi.encodePacked(moneyOfProvider[msg.sender]))) {
-                    
-    //             continue;
-    //         }else{
-    //             allFailProAddress = addressToString(otherProAddress[i]).toSlice().concat("+".toSlice());
-    //             dataProviders[msg.sender].rewardVote = 0;
-    //             return (false,allFailProAddress);
-    //         }
-    //     }
-    //     dataProviders[msg.sender].rewardVote = 1;
-    //     return (true,addressToString(msg.sender));
-    // }
+        emit ProviderVerifiedReward(msg.sender,dataProviders[msg.sender].rewardVote,isAgree);
+    }
     
     
     // //9.2 consumer函数
@@ -294,6 +307,7 @@ contract QodReward {
     // }
     
     // //12、发放资金
+    // //解释：理论上这一步应该内部先发起验证、再统计票数（中途拒绝支付gas说明对结果表示不同意）
     // function transferMoney() public returns (string memory result) {
     //     if (isAcceptReward() == true){
     //          uint balance = address(this).balance;

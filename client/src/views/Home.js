@@ -106,17 +106,17 @@ class Home extends React.Component {
       console.log("address==", address)
       var qod = JSON.stringify(qodData[i].qod)
       console.log("qod==", qod)
-      console.log("qodType==", typeof(qod))
+      console.log("qodType==", typeof (qod))
 
       await contract.methods.calcuQod(address, qod).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
         .on('transactionHash', function (hash) {
           console.log("SaveQodTransHash==", hash)
-         
+
           let logInfo = {}
           logInfo.address = address
           logInfo.SaveQodTransHash = hash
           saveQodLog.push(logInfo)
-          
+
         })
         .on('receipt', function (receipt) {
           console.log("receipt==", receipt)
@@ -126,13 +126,7 @@ class Home extends React.Component {
     alert(JSON.stringify(saveQodLog))
   }
 
-  calcuReward = () => {
-    calcuRewards(this.state.rewardValue).then(res => {
-      console.log("reward==", res);
-      console.log("type==", typeof (res));
-      alert(JSON.stringify(res))
-    })
-  }
+
 
   connectBlockChain = async () => {
     // state = { isSaveIpfsSuccess: false, web3: null, accounts: null, contract: null };
@@ -193,9 +187,9 @@ class Home extends React.Component {
       aToi.address = selectedData[i].address
       var ipfses = []
       for (var j in selectedData) {
-        if (selectedData[j].address == selectedData[i].address) { 
+        if (selectedData[j].address == selectedData[i].address) {
           ipfses.push(selectedData[j].ipfsdatahash)
-          
+
           tempwData[j].address = null
         } else {
           continue
@@ -221,12 +215,12 @@ class Home extends React.Component {
       await contract.methods.registerAsProvider(ipfsArr, address).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
         .on('transactionHash', function (hash) {
           console.log("transactionHash==", hash)
-         
+
           let logInfo = {}
           logInfo.address = address
           logInfo.SaveIpfsTransHash = hash
           saveIpfsLog.push(logInfo)
-          
+
         })
         .on('receipt', function (receipt) {
           console.log("receipt==", receipt)
@@ -235,8 +229,131 @@ class Home extends React.Component {
     }
     alert(JSON.stringify(saveIpfsLog))
 
-  } 
+  }
 
+
+  calcuRewardC = async () => {
+    const { accounts, contract } = this.state;
+    //奖金额公布到区块链
+    var publishRewardsLog = {}
+    console.log("rewardValue==", this.state.rewardValue)
+    console.log("typerewardValue==", typeof (this.state.rewardValue))
+    await contract.methods.publishTotalMoney(Number(this.state.rewardValue)).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("publishRewardHash==", hash)
+
+        publishRewardsLog.address = accounts[0]
+        publishRewardsLog.publishRewardHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(publishRewardsLog))
+
+
+    //计算每人的激励金额
+    // var calcuRewardByConsumerLog = []
+    calcuRewards(this.state.rewardValue).then(res => {
+      console.log("reward==", res);
+      console.log("type==", typeof (res));
+      alert(JSON.stringify(res))
+      this.saveRewardByC(res)
+
+    })
+
+
+  }
+
+  saveRewardByC = async (res) => {
+    const { accounts, contract } = this.state;
+    //暂存到区块链
+    var calcuRewardByConsumerLog = []
+    console.log("rewardValue==", this.state.rewardValue)
+    console.log("typerewardValue==", typeof (this.state.rewardValue))
+    for (var i in res) {
+      var address = res[i].uaddress
+      var reward = res[i].reward
+      await contract.methods.calcuRewardByConsumer(address, reward).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+        .on('transactionHash', function (hash) {
+          console.log("calcuRewardByConsumerHash==", hash)
+          let log = {}
+          log.address = address
+          log.calcuRewardByConsumerHash = hash
+          calcuRewardByConsumerLog.push(log)
+          // console.log("calcuRewardByConsumerLog==",JSON.stringify(calcuRewardByConsumerLog))
+          // alert(JSON.stringify(calcuRewardByConsumerLog))
+        })
+        .on('receipt', function (receipt) {
+          console.log("receipt==", receipt)
+        })
+
+    }
+
+    console.log("calcuRewardByConsumerLog==", JSON.stringify(calcuRewardByConsumerLog))
+    alert(JSON.stringify(calcuRewardByConsumerLog))
+  }
+
+  calcuRewardP = () => {
+
+    //计算每人的激励金额
+    calcuRewards(this.state.rewardValue).then(res => {
+      console.log("reward==", res);
+      console.log("type==", typeof (res));
+      alert(JSON.stringify(res))
+      this.saveRewardByP(res)
+
+    })
+
+  }
+
+  saveRewardByP = async (res) => {
+    const { contract } = this.state;
+
+    var calcuRewardByProviderLog = []
+    //暂存到区块链
+    console.log("rewardValue==", this.state.rewardValue)
+    console.log("typerewardValue==", typeof (this.state.rewardValue))
+    for (var i in res) {
+      var address = res[i].uaddress
+      var reward = res[i].reward
+      await contract.methods.calcuRewardByProvider(address, reward).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+        .on('transactionHash', function (hash) {
+          console.log("calcuRewardByProviderHash==", hash)
+          let log = {}
+          log.address = address
+          log.calcuRewardByProviderHash = hash
+          calcuRewardByProviderLog.push(log)
+
+        })
+        .on('receipt', function (receipt) {
+          console.log("receipt==", receipt)
+        })
+    }
+    alert(JSON.stringify(calcuRewardByProviderLog))
+  }
+
+  providerVerifiedReward = async () => {
+    const { accounts, contract } = this.state;
+    //奖金额公布到区块链
+    var providerVerifiedRewardLog = {}
+    console.log("rewardValue==", this.state.rewardValue)
+    console.log("typerewardValue==", typeof (this.state.rewardValue))
+    await contract.methods.providerVerifiedReward().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("providerVerifiedRewardHash==", hash)
+
+        providerVerifiedRewardLog.address = accounts[0]
+        providerVerifiedRewardLog.publishRewardHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(providerVerifiedRewardLog))
+  }
 
   onValueChange = (event) => {
     this.setState({ rewardValue: event.target.value })
@@ -260,21 +377,17 @@ class Home extends React.Component {
     return (
       <div>
         <div style={{ marginBottom: 16 }}>
-          <Button type="primary" onClick={this.calcuAndSaveQod} disabled={!hasSelected} loading={loading}>
-            CalcuQod
-          </Button>
 
+          <Button type="primary" onClick={this.SaveIpfsHashInBlockChain} disabled={!hasSelected} loading={loading}>
+            SaveIpfsHashInBlockChain
+          </Button>
           <span style={{ marginLeft: 8 }}>
             {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
           </span>
-          <span style={{ marginLeft: 8 }}>
-            <Button type="primary" onClick={this.SaveIpfsHashInBlockChain} disabled={!hasSelected} loading={loading}>
-              SaveIpfsHashInBlockChain
-          </Button>
-          </span>
+
           <span style={{ float: "right" }}>
-            <Button type="primary" onClick={this.calcuReward} disabled={!hasSelected} loading={loading}>
-              CalcuReward
+            <Button type="primary" onClick={this.calcuRewardC} disabled={!hasSelected} loading={loading}>
+              CalcuRewardByConsumer
           </Button>
           </span>
           <span style={{ float: "right" }}>
@@ -282,10 +395,48 @@ class Home extends React.Component {
               <Input size="default size" prefix={<Icon type="pay-circle" style={{ fontSize: 15, textAlign: "center" }} />} placeholder="Enter incentive amount" value={this.state.rewardValue} onChange={this.onValueChange} />
             </FormItem>
           </span>
+
         </div>
 
+        {/* <div>
+            <Button type="primary" onClick={this.calcuRewardP} disabled={!hasSelected} loading={loading}>
+              CalcuRewardByProvider
+          </Button>
+        </div> */}
+
+        <div style={{float: "left" }}>
+          < Button type="primary" onClick={this.calcuAndSaveQod} disabled={!hasSelected} loading={loading}>
+            CalcuQod
+          </Button>
+          <span style={{ marginLeft: 8 }}>
+            <Button type="primary" onClick={this.calcuRewardP} disabled={!hasSelected} loading={loading}>
+              CalcuRewardByProvider
+          </Button>
+          </span>
+          <span style={{ marginLeft: 8 }}>
+            <Button type="primary" onClick={this.providerVerifiedReward} disabled={!hasSelected} loading={loading}>
+              providerVerified
+          </Button>
+          </span>
+
+          <span style={{ marginLeft: 428 }}>
+            <Button type="primary" onClick={this.providerVerifiedReward} disabled={!hasSelected} loading={loading}>
+              Transfer
+          </Button>
+          </span>
+         
+        </div>        
+
+        {/* <div style={{float: "right" }}>
+          <span style={{ float: "right" }}>
+            <Button type="primary" onClick={this.calcuRewardP} disabled={!hasSelected} loading={loading}>
+              CalcuRewardByProvider
+          </Button>
+          </span>
+        </div> */}
+
         <Table rowSelection={rowSelection} columns={columns} dataSource={this.state.data} />
-      </div>
+      </div >
     );
   }
 
