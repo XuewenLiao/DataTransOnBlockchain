@@ -45,6 +45,9 @@ contract QodReward {
     event CalcuRewardByProvider(address proAddress,uint money,bool isSelf);
     event CalcuRewardByConsumer(address proAddress,uint money);
     event ProviderVerifiedReward(address proAddress,uint rewardVote,bool isAgree);
+    event IsAcceptReward(uint proLen,uint sum,bool isAccept);
+    event TansferContent(address from,address to,uint value);
+    event TransferSuccess(bool isAccept,bool IsTransferSuccess);
     
     modifier etherProvided() {
         require(msg.value > 0, "Need ether to be greater than 0");
@@ -60,14 +63,14 @@ contract QodReward {
     }
     
     //1、注册数据提供者到智能合约: 暂存ipfsHash --让hash和消费者以映射形式暂存
-    function registerAsProvider (string[] memory ipfsDataHashArry,address proAddress) public {
+    function registerAsProvider (string[] memory ipfsDataHashArry,address payable proAddress) public {
     
         bool isSaveSuccess = false;
         if (ipfsDataHashArry.length != 0 && proAddress != address(0x0)) {
             dataProviders[proAddress].ipfsDataHash = ipfsDataHashArry;
             dataProviders[proAddress].qodVote = 0; //初始化provider为不同意
             dataProviders[proAddress].rewardVote = 0;
-            dataProviderAddresses.push(msg.sender);
+            dataProviderAddresses.push(proAddress);
             isSaveSuccess = true;
         }else{
             isSaveSuccess = false;
@@ -278,50 +281,83 @@ contract QodReward {
     // }
     
     
-    // //10、数据提供者投票表决是否接受目前的激励金额(已在9.1中实现)
+    //10、数据提供者投票表决是否接受目前的激励金额(已在9.1中实现)
     
-    // //11、统计票数（内部函数）
-    // function isAcceptReward() internal returns (bool isAccept) {
-    //     uint proLen = dataProviderAddresses.length;
-    //     uint sum = 0;
-    //     for(uint i = 0;i < proLen;i++) {
-    //         if (dataProviders[dataProviderAddresses[i]].rewardVote == 1 ) {
-    //             sum = sum + 1;
-    //         }
-    //     }
+    //11、统计票数（内部函数）
+    function isAcceptReward() public returns (bool) {
+        bool isAccept = false;
+        uint proLen = dataProviderAddresses.length;
+        uint sum = 0;
+        for(uint i = 0;i < proLen;i++) {
+            if (dataProviders[dataProviderAddresses[i]].rewardVote == 1 ) {
+                sum = sum + 1;
+            }
+        }
         
-    //     if (proLen % 2 == 0){  //总人数为偶数
-    //         if (sum > proLen/2) {   //超过50%同意
-    //             return true;
-    //         }else{
-    //             return false;
-    //         }
-    //     }else{  //总人数为奇数
-    //         if (sum >= (proLen+2-1)/2) {    //超过50%同意
-    //             return true;
-    //         }else{
-    //             return false;
-    //         }
-    //     }
+        if (proLen % 2 == 0){  //总人数为偶数
+            if (sum > proLen/2) {   //超过50%同意
+                isAccept = true;
+                // return isAccept;
+            }else{
+                isAccept = false;
+                // return isAccept;
+            }
+        }else{  //总人数为奇数
+            if (sum >= (proLen+2-1)/2) {    //超过50%同意
+                isAccept = true;
+                // return isAccept;
+            }else{
+                isAccept = false;
+                // return isAccept;
+            }
+        }
+
+        emit IsAcceptReward(proLen,sum,isAccept);
+        return isAccept;
         
-    // }
+    }
     
-    // //12、发放资金
-    // //解释：理论上这一步应该内部先发起验证、再统计票数（中途拒绝支付gas说明对结果表示不同意）
-    // function transferMoney() public returns (string memory result) {
-    //     if (isAcceptReward() == true){
-    //          uint balance = address(this).balance;
+    //12、consumer发放资金
+    //解释：理论上这一步应该内部先发起验证、再统计票数（中途拒绝支付gas说明对结果表示不同意）
+    function transferMoney() payable public {
+        bool IsTransferSuccess = false;
+        bool isAccept = isAcceptReward();
+        if (isAccept == true){
+            //  uint balance = address(this).balance;
+             uint proLen = dataProviderAddresses.length;
+            for (uint i = 0; i < proLen; i++) {
+                address payable _providerAddress = dataProviderAddresses[i];
+                address(_providerAddress).transfer(dataProviders[_providerAddress].pmoney);
+                emit TansferContent(msg.sender,dataProviderAddresses[i],dataProviders[_providerAddress].pmoney);
+            }
+            IsTransferSuccess = true;
+        }else{
+            IsTransferSuccess = false;
+        }
+        emit TransferSuccess(isAccept,IsTransferSuccess);
+    }
+    
+     //12、consumer发放资金
+    //解释：理论上这一步应该内部先发起验证、再统计票数（中途拒绝支付gas说明对结果表示不同意）
+    // function transferMoney() payable public{
+    //     bool IsTransferSuccess = false;
+    //     bool isAccept = true;
+    //     uint m = 2;
+    //     if (isAccept == true){
+    //         //  uint balance = address(this).balance;
     //          uint proLen = dataProviderAddresses.length;
     //         for (uint i = 0; i < proLen; i++) {
+    //             // dataProviders[_providerAddress].pmoney = 2;
     //             address payable _providerAddress = dataProviderAddresses[i];
-    //             _providerAddress.transfer(balance * dataProviders[_providerAddress].pmoney);
+    //             address(_providerAddress).transfer(m);
+    //             emit TansferContent(msg.sender,dataProviderAddresses[i],m);
     //         }
-    //         return "交易成功";
+    //         IsTransferSuccess = true;
     //     }else{
-    //         return "分配金额未达成一致";
+    //         IsTransferSuccess = false;
     //     }
+    //     emit TransferSuccess(isAccept,IsTransferSuccess);
     // }
-    
     
     
     

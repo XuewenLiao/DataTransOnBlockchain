@@ -355,6 +355,44 @@ class Home extends React.Component {
     alert(JSON.stringify(providerVerifiedRewardLog))
   }
 
+  tansfer = async () => {
+    const { accounts, contract } = this.state;
+    var transferLog = {}
+ 
+    await contract.methods.transferMoney().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '80' ,value:20}) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("providerVerifiedRewardHash==", hash)
+
+        transferLog.address = accounts[0]
+        transferLog.publishRewardHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(transferLog))
+  }
+
+  isAccept = async () => {
+    const { accounts, contract } = this.state;
+    var isAcceptLog = {}
+ 
+    await contract.methods.isAcceptReward().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("providerVerifiedRewardHash==", hash)
+
+        isAcceptLog.address = accounts[0]
+        isAcceptLog.publishRewardHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(isAcceptLog))
+  }
+
   onValueChange = (event) => {
     this.setState({ rewardValue: event.target.value })
     console.log("eventrewardValue==", event.target.value)
@@ -398,13 +436,7 @@ class Home extends React.Component {
 
         </div>
 
-        {/* <div>
-            <Button type="primary" onClick={this.calcuRewardP} disabled={!hasSelected} loading={loading}>
-              CalcuRewardByProvider
-          </Button>
-        </div> */}
-
-        <div style={{float: "left" }}>
+        <div style={{marginBottom: 16 }}>
           < Button type="primary" onClick={this.calcuAndSaveQod} disabled={!hasSelected} loading={loading}>
             CalcuQod
           </Button>
@@ -419,21 +451,18 @@ class Home extends React.Component {
           </Button>
           </span>
 
-          <span style={{ marginLeft: 428 }}>
-            <Button type="primary" onClick={this.providerVerifiedReward} disabled={!hasSelected} loading={loading}>
+          <span style={{ marginLeft: 8 }}>
+            <Button type="primary" onClick={this.isAccept} disabled={!hasSelected} loading={loading}>
+            JugeAccept
+          </Button>
+          </span>
+          <span style={{ marginLeft: 8 }}>
+            <Button type="primary" onClick={this.tansfer} disabled={!hasSelected} loading={loading}>
               Transfer
           </Button>
           </span>
          
         </div>        
-
-        {/* <div style={{float: "right" }}>
-          <span style={{ float: "right" }}>
-            <Button type="primary" onClick={this.calcuRewardP} disabled={!hasSelected} loading={loading}>
-              CalcuRewardByProvider
-          </Button>
-          </span>
-        </div> */}
 
         <Table rowSelection={rowSelection} columns={columns} dataSource={this.state.data} />
       </div >
