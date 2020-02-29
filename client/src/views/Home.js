@@ -3,6 +3,7 @@ import { Table, Button, Form, Input, Icon } from 'antd';
 import { getOrigData, calcuQod, calcuRewards } from '../methodTool'
 import QodRewardContract from "../contracts/QodReward.json";
 import getWeb3 from "../getWeb3";
+var {cacheSelectedRows,cacheRewardValue,cacheTansLog} = require("../models/CacheData")
 
 const FormItem = Form.Item
 const columns = [
@@ -33,6 +34,7 @@ const columns = [
   },
 ];
 
+
 const data = [];
 
 class Home extends React.Component {
@@ -41,7 +43,8 @@ class Home extends React.Component {
     loading: false,
     rewardValue: '',
     data: [],
-    web3: null, accounts: null, contract: null
+    web3: null, accounts: null, contract: null,
+    glableSelectData:[]
   };
 
   componentDidMount = async () => {
@@ -50,6 +53,7 @@ class Home extends React.Component {
   }
 
   start = () => {
+  
     //后台拿数据
     this.setState({ loading: true });
     // ajax request after empty completing
@@ -78,7 +82,11 @@ class Home extends React.Component {
 
   calcuAndSaveQod = () => {
     var dataIdArray = []
-    var selectedRows = this.state.selectedRowKeys
+
+    //取缓存数据
+    var selectedRows = JSON.parse(window.localStorage.getItem("glableSelectData"));
+    console.log("sessionSelectData",selectedRows)
+
     for (var i in selectedRows) {
       var data = this.state.data
       dataIdArray.push(data[selectedRows[i]]._id)
@@ -124,6 +132,8 @@ class Home extends React.Component {
 
     }
     alert(JSON.stringify(saveQodLog))
+    cacheTansLog.push(JSON.stringify(saveQodLog))
+    console.log("cacheTansLogQod==",cacheTansLog)
   }
 
 
@@ -167,6 +177,12 @@ class Home extends React.Component {
     // var testSelectData = [{ "address": "0x276ea10526355d106a1abb3853b41aa9adc9af54", "ipfsArray": ["a11", "a12", "a13"] }]
 
     var selectedRows = this.state.selectedRowKeys
+    
+    //缓存consumer选择的数据id
+    cacheSelectedRows = JSON.parse(JSON.stringify(this.state.selectedRowKeys));
+    window.localStorage.setItem("glableSelectData",JSON.stringify(cacheSelectedRows));
+
+    
     var data = this.state.data
     var selectedData = []
     for (var i in selectedRows) {
@@ -228,12 +244,16 @@ class Home extends React.Component {
 
     }
     alert(JSON.stringify(saveIpfsLog))
+    cacheTansLog.push(JSON.stringify(saveIpfsLog))
 
   }
 
 
   calcuRewardC = async () => {
     const { accounts, contract } = this.state;
+     //缓存rewardValue:comsumer公布的总奖金额
+    window.localStorage.setItem("glableRewardValue",JSON.stringify(this.state.rewardValue))
+
     //奖金额公布到区块链
     var publishRewardsLog = {}
     console.log("rewardValue==", this.state.rewardValue)
@@ -251,7 +271,7 @@ class Home extends React.Component {
       })
 
     alert(JSON.stringify(publishRewardsLog))
-
+    cacheTansLog.push(JSON.stringify(publishRewardsLog))
 
     //计算每人的激励金额
     // var calcuRewardByConsumerLog = []
@@ -282,8 +302,7 @@ class Home extends React.Component {
           log.address = address
           log.calcuRewardByConsumerHash = hash
           calcuRewardByConsumerLog.push(log)
-          // console.log("calcuRewardByConsumerLog==",JSON.stringify(calcuRewardByConsumerLog))
-          // alert(JSON.stringify(calcuRewardByConsumerLog))
+
         })
         .on('receipt', function (receipt) {
           console.log("receipt==", receipt)
@@ -293,12 +312,16 @@ class Home extends React.Component {
 
     console.log("calcuRewardByConsumerLog==", JSON.stringify(calcuRewardByConsumerLog))
     alert(JSON.stringify(calcuRewardByConsumerLog))
+    cacheTansLog.push(JSON.stringify(calcuRewardByConsumerLog))
   }
 
   calcuRewardP = () => {
 
+    cacheRewardValue = JSON.parse(window.localStorage.getItem("glableRewardValue"));
+    console.log("cacheRewardValue",cacheRewardValue)
     //计算每人的激励金额
-    calcuRewards(this.state.rewardValue).then(res => {
+    
+    calcuRewards(cacheRewardValue).then(res => {
       console.log("reward==", res);
       console.log("type==", typeof (res));
       alert(JSON.stringify(res))
@@ -313,8 +336,7 @@ class Home extends React.Component {
 
     var calcuRewardByProviderLog = []
     //暂存到区块链
-    console.log("rewardValue==", this.state.rewardValue)
-    console.log("typerewardValue==", typeof (this.state.rewardValue))
+ 
     for (var i in res) {
       var address = res[i].uaddress
       var reward = res[i].reward
@@ -332,6 +354,7 @@ class Home extends React.Component {
         })
     }
     alert(JSON.stringify(calcuRewardByProviderLog))
+    cacheTansLog.push(JSON.stringify(calcuRewardByProviderLog))
   }
 
   providerVerifiedReward = async () => {
@@ -353,6 +376,7 @@ class Home extends React.Component {
       })
 
     alert(JSON.stringify(providerVerifiedRewardLog))
+    cacheTansLog.push(JSON.stringify(providerVerifiedRewardLog))
   }
 
   tansfer = async () => {
@@ -361,7 +385,7 @@ class Home extends React.Component {
  
     await contract.methods.transferMoney().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '80' ,value:20}) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
       .on('transactionHash', function (hash) {
-        console.log("providerVerifiedRewardHash==", hash)
+        console.log("transferHash==", hash)
 
         transferLog.address = accounts[0]
         transferLog.publishRewardHash = hash
@@ -372,6 +396,7 @@ class Home extends React.Component {
       })
 
     alert(JSON.stringify(transferLog))
+    cacheTansLog.push(JSON.stringify(transferLog))
   }
 
   isAccept = async () => {
@@ -380,7 +405,7 @@ class Home extends React.Component {
  
     await contract.methods.isAcceptReward().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
       .on('transactionHash', function (hash) {
-        console.log("providerVerifiedRewardHash==", hash)
+        console.log("isAcceptHash==", hash)
 
         isAcceptLog.address = accounts[0]
         isAcceptLog.publishRewardHash = hash
@@ -391,6 +416,7 @@ class Home extends React.Component {
       })
 
     alert(JSON.stringify(isAcceptLog))
+    cacheTansLog.push(JSON.stringify(isAcceptLog))
   }
 
   onValueChange = (event) => {
@@ -405,18 +431,22 @@ class Home extends React.Component {
 
 
 
+
   render() {
-    const { loading, selectedRowKeys } = this.state;
+    var { loading, selectedRowKeys,glableSelectData} = this.state;
+    
+
     const rowSelection = {
       selectedRowKeys,
       onChange: this.onSelectChange,
     };
     const hasSelected = selectedRowKeys.length > 0;
+
     return (
       <div>
         <div style={{ marginBottom: 16 }}>
 
-          <Button type="primary" onClick={this.SaveIpfsHashInBlockChain} disabled={!hasSelected} loading={loading}>
+          <Button type="primary" onClick={this.SaveIpfsHashInBlockChain} loading={loading}>
             SaveIpfsHashInBlockChain
           </Button>
           <span style={{ marginLeft: 8 }}>
@@ -424,7 +454,7 @@ class Home extends React.Component {
           </span>
 
           <span style={{ float: "right" }}>
-            <Button type="primary" onClick={this.calcuRewardC} disabled={!hasSelected} loading={loading}>
+            <Button type="primary" onClick={this.calcuRewardC} loading={loading}>
               CalcuRewardByConsumer
           </Button>
           </span>
@@ -437,27 +467,27 @@ class Home extends React.Component {
         </div>
 
         <div style={{marginBottom: 16 }}>
-          < Button type="primary" onClick={this.calcuAndSaveQod} disabled={!hasSelected} loading={loading}>
+          < Button type="primary" onClick={this.calcuAndSaveQod} loading={loading}>
             CalcuQod
           </Button>
           <span style={{ marginLeft: 8 }}>
-            <Button type="primary" onClick={this.calcuRewardP} disabled={!hasSelected} loading={loading}>
+            <Button type="primary" onClick={this.calcuRewardP}  loading={loading}>
               CalcuRewardByProvider
           </Button>
           </span>
           <span style={{ marginLeft: 8 }}>
-            <Button type="primary" onClick={this.providerVerifiedReward} disabled={!hasSelected} loading={loading}>
+            <Button type="primary" onClick={this.providerVerifiedReward}  loading={loading}>
               providerVerified
           </Button>
           </span>
 
           <span style={{ marginLeft: 8 }}>
-            <Button type="primary" onClick={this.isAccept} disabled={!hasSelected} loading={loading}>
+            <Button type="primary" onClick={this.isAccept}  loading={loading}>
             JugeAccept
           </Button>
           </span>
           <span style={{ marginLeft: 8 }}>
-            <Button type="primary" onClick={this.tansfer} disabled={!hasSelected} loading={loading}>
+            <Button type="primary" onClick={this.tansfer}  loading={loading}>
               Transfer
           </Button>
           </span>
@@ -470,5 +500,79 @@ class Home extends React.Component {
   }
 
 }
+
+
+//   render() {
+//     var { loading, selectedRowKeys,glableSelectData} = this.state;
+//     window.localStorage.setItem("glableSelectData",JSON.stringify(cacheSelectedRows))
+//     // var selectData = []
+//     var selectData = JSON.parse(window.localStorage.getItem("glableSelectData"));
+//     console.log("selectData==",JSON.stringify(selectData));
+    
+
+//     const rowSelection = {
+//       selectedRowKeys,
+//       onChange: this.onSelectChange,
+//     };
+//     const hasSelected = selectedRowKeys.length > 0;
+//     const datahasSelected = selectData.length > 0;
+//     return (
+//       <div>
+//         <div style={{ marginBottom: 16 }}>
+
+//           <Button type="primary" onClick={this.SaveIpfsHashInBlockChain} disabled={!hasSelected} loading={loading}>
+//             SaveIpfsHashInBlockChain
+//           </Button>
+//           <span style={{ marginLeft: 8 }}>
+//             {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
+//           </span>
+
+//           <span style={{ float: "right" }}>
+//             <Button type="primary" onClick={this.calcuRewardC} disabled={!hasSelected} loading={loading}>
+//               CalcuRewardByConsumer
+//           </Button>
+//           </span>
+//           <span style={{ float: "right" }}>
+//             <FormItem>
+//               <Input size="default size" prefix={<Icon type="pay-circle" style={{ fontSize: 15, textAlign: "center" }} />} placeholder="Enter incentive amount" value={this.state.rewardValue} onChange={this.onValueChange} />
+//             </FormItem>
+//           </span>
+
+//         </div>
+
+//         <div style={{marginBottom: 16 }}>
+//           < Button type="primary" onClick={this.calcuAndSaveQod} disabled={!datahasSelected} loading={loading}>
+//             CalcuQod
+//           </Button>
+//           <span style={{ marginLeft: 8 }}>
+//             <Button type="primary" onClick={this.calcuRewardP} disabled={!hasSelected} loading={loading}>
+//               CalcuRewardByProvider
+//           </Button>
+//           </span>
+//           <span style={{ marginLeft: 8 }}>
+//             <Button type="primary" onClick={this.providerVerifiedReward} disabled={!hasSelected} loading={loading}>
+//               providerVerified
+//           </Button>
+//           </span>
+
+//           <span style={{ marginLeft: 8 }}>
+//             <Button type="primary" onClick={this.isAccept} disabled={!hasSelected} loading={loading}>
+//             JugeAccept
+//           </Button>
+//           </span>
+//           <span style={{ marginLeft: 8 }}>
+//             <Button type="primary" onClick={this.tansfer} disabled={!hasSelected} loading={loading}>
+//               Transfer
+//           </Button>
+//           </span>
+         
+//         </div>        
+
+//         <Table rowSelection={rowSelection} columns={columns} dataSource={this.state.data} />
+//       </div >
+//     );
+//   }
+
+// }
 
 export default Home;
