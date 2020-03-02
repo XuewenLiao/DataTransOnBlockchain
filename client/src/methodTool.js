@@ -42,6 +42,24 @@ export const sendData = (newData) => axios.post('http://127.0.0.1:4000/datacotro
         console.log(error);
     });
 
+
+ //更新hassel后的数据
+export const changeSold = (newData) => axios.post('http://127.0.0.1:4000/datacotrol/soldOut', {
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    data: newData
+})
+    .then(function (response) {
+        console.log("sendResult==",response.data);
+        // alert(JSON.stringify(response.data));
+        return response.data;
+    })
+    .catch(function (error) {
+        console.log(error);
+    });   
+
+    
 //计算选中数据的qod
 //参数：选中的数据id集合
 export const calcuQod = (dataIdArray) => axios.post('http://127.0.0.1:4000/datacotrol/calcuqod', {

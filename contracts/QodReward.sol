@@ -48,6 +48,7 @@ contract QodReward {
     event IsAcceptReward(uint proLen,uint sum,bool isAccept);
     event TansferContent(address from,address to,uint value);
     event TransferSuccess(bool isAccept,bool IsTransferSuccess);
+    event ClearLastTrans(bool isClear);
     
     modifier etherProvided() {
         require(msg.value > 0, "Need ether to be greater than 0");
@@ -359,6 +360,11 @@ contract QodReward {
     //     emit TransferSuccess(isAccept,IsTransferSuccess);
     // }
     
+    function clearLastTrans() public {
+        //清空此次交易consumer选择的数据，避免上一次交易数据成为下一次的交易数据
+        delete dataProviderAddresses;
+        emit ClearLastTrans(true);
+    }
     
     
     // //Tool: address change to string

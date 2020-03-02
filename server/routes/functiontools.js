@@ -148,10 +148,10 @@ function getQod(ptowSummary, uiArray) {
                 } else { //说明当前点只有一个人采：errSum == errToPAArray[i].err != 0
                     if (errToPAArray[i].collectdata > errToPA.truth) {
                         eachQod.qodcontent = (errToPAArray[i].truth / errToPAArray[i].collectdata).toFixed(2)
-                    }else {
+                    } else {
                         eachQod.qodcontent = (errToPAArray[i].collectdata / errToPAArray[i].truth).toFixed(2)
                     }
-                    
+
                 }
 
             } else {
@@ -161,11 +161,9 @@ function getQod(ptowSummary, uiArray) {
             eachQod.dataplace = errToPAArray[i].dataplace
             eachQod.uaddress = errToPAArray[i].uaddress
             eachQodArray.push(eachQod)
-            // qod.push(eachQod)
-            // qodMap.uaddress = errToPAArray[i].uaddress
-            // qodMap.qod = qod
+
         }
-        // qodArray.push(qodMap)       
+
     }
 
 

@@ -1,5 +1,5 @@
 import Home from '../views/Home';
-import News from '../views/News';
+import Mine from '../views/Mine';
 import UploadManage from '../views/UploadManage';
 let routes = [
     {
@@ -8,8 +8,8 @@ let routes = [
       exact: true
     },
     {
-      path: "/news",
-      component: News
+      path: "/mine",
+      component: Mine
     },
     {
       path: "/uploadmanage",

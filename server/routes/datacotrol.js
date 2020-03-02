@@ -30,29 +30,28 @@ router.post('/updatehashdata', async (req, res) => {
   res.send({ result: 'UpdateDbSuccess' })
 });
 
-//批量插入数据(临时导入数据时用)
-router.post('/allinserttodb', async (req, res) => {
 
-  var testData = [{ "uaddress": "u1", "datadate": "d1", "dataplace": "p1", "datacontent": { "placedata": 63.0, "collectdata": 75.2 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "u2", "datadate": "d2", "dataplace": "p2", "datacontent": { "placedata": 63.0, "collectdata": 63.0 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "u3", "datadate": "d3", "dataplace": "p3", "datacontent": { "placedata": 63.0, "collectdata": 80.2 }, "ipfsdatahash": "", "hassell": false }];
-  UserCollectData.insertMany(data, function (error, docs) {
-    if (error) {
-      console.error("error", error)
-    } else {
-      console.log("docs:", docs)
-    }
-  });
+//更改卖出状态
+router.post('/soldOut', async (req, res) => {
+  var data = req.body.data
 
-  res.send(testuser);
+  //更新数据库
+  for (var i in data) {
+    var id = data[i];
+    var updateObj = { hassell: true };
+    UserCollectData.findByIdAndUpdate(id, updateObj, { new: true }, function (err, model) {
+      if (err) {
+        res.send({ result: 'UpdateDbFail' })
+      } else {
+        console.log("更新后stauts数据==", model)
+      }
+    })
+  }
+
+  res.send({ result: 'UpdateStatusSuccess' })
 });
 
-// //算qod
-// router.post('/calcuqod',async (req, res) => {
-//     var  alldata = data;
-//     qodArray = calcuQod(alldata);
-//     // console.log("data==",alldata);
 
-
-// });
 
 //算qod
 router.post('/calcuqod', async (req, res) => {
@@ -83,5 +82,21 @@ router.post('/calcureward', async (req, res) => {
   res.send(rewardArray)
 });
 
+
+
+//批量插入数据(临时导入数据时用)
+router.post('/allinserttodb', async (req, res) => {
+
+  var testData = [{ "uaddress": "u1", "datadate": "d1", "dataplace": "p1", "datacontent": { "placedata": 63.0, "collectdata": 75.2 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "u2", "datadate": "d2", "dataplace": "p2", "datacontent": { "placedata": 63.0, "collectdata": 63.0 }, "ipfsdatahash": "", "hassell": false }, { "uaddress": "u3", "datadate": "d3", "dataplace": "p3", "datacontent": { "placedata": 63.0, "collectdata": 80.2 }, "ipfsdatahash": "", "hassell": false }];
+  UserCollectData.insertMany(data, function (error, docs) {
+    if (error) {
+      console.error("error", error)
+    } else {
+      console.log("docs:", docs)
+    }
+  });
+
+  res.send(testuser);
+});
 
 module.exports = router;
