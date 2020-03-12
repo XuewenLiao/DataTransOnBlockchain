@@ -14,6 +14,7 @@ contract QodReward {
     string qodScore;
     uint pmoney;
     uint qodVote;  //对qod验证结果进行投票--0：不同意；1：同意
+    uint rewardVertifyVote;  //对reward验证结果进行投票--0：不同意；1：同意
     uint rewardVote;  //对reward分配金额进行投票--0：不同意；1：同意
     mapping(address => OtherDataProvider) otherDataProvider;
     address[] otherProAddressArry;
@@ -45,7 +46,8 @@ contract QodReward {
     event CalcuRewardByProvider(address proAddress,uint money,bool isSelf);
     event CalcuRewardByConsumer(address proAddress,uint money);
     event ProviderVerifiedReward(address proAddress,uint rewardVote,bool isAgree);
-    event IsAcceptReward(uint proLen,uint sum,bool isAccept);
+    event IsAcceptReward(uint rewardVote,bool isAccept);
+    event StatisticReward(uint proLen,uint sum,bool isAccept);
     event TansferContent(address from,address to,uint value);
     event TransferSuccess(bool isAccept,bool IsTransferSuccess);
     event ClearLastTrans(bool isClear);
@@ -71,6 +73,7 @@ contract QodReward {
             dataProviders[proAddress].ipfsDataHash = ipfsDataHashArry;
             dataProviders[proAddress].qodVote = 0; //初始化provider为不同意
             dataProviders[proAddress].rewardVote = 0;
+            dataProviders[proAddress].rewardVertifyVote = 0;
             dataProviderAddresses.push(proAddress);
             isSaveSuccess = true;
         }else{
@@ -237,18 +240,19 @@ contract QodReward {
                 keccak256(abi.encodePacked(moneyOfProvider[otherProAddress[i]])) && 
                 keccak256(abi.encodePacked(dataProviders[msg.sender].pmoney)) == 
                 keccak256(abi.encodePacked(moneyOfProvider[msg.sender]))) {
-                dataProviders[msg.sender].rewardVote = 1;    
+                dataProviders[msg.sender].rewardVertifyVote = 1;
+                // dataProviders[msg.sender].rewardVote = 1;    
                 continue;
             }else{
-                // allFailProAddress = addressToString(otherProAddress[i]).toSlice().concat("+".toSlice());
-                dataProviders[msg.sender].rewardVote = 0;
+                dataProviders[msg.sender].rewardVertifyVote = 0;
+                // dataProviders[msg.sender].rewardVote = 0;
                 isAgree = false;
                 break;
             }
             
         }
         
-        emit ProviderVerifiedReward(msg.sender,dataProviders[msg.sender].rewardVote,isAgree);
+        emit ProviderVerifiedReward(msg.sender,dataProviders[msg.sender].rewardVertifyVote,isAgree);
     }
     
     
@@ -282,15 +286,21 @@ contract QodReward {
     // }
     
     
-    //10、数据提供者投票表决是否接受目前的激励金额(已在9.1中实现)
+    //10、数据提供者投票表决是否接受目前的激励金额
+    function isAcceptReward() public {
+        bool accept = false;
+        dataProviders[msg.sender].rewardVote = 1;
+        accept = true;
+        emit IsAcceptReward(dataProviders[msg.sender].rewardVote,accept);
+    }
     
     //11、统计票数（内部函数）
-    function isAcceptReward() public returns (bool) {
+    function statisticReward() public returns (bool) {
         bool isAccept = false;
         uint proLen = dataProviderAddresses.length;
         uint sum = 0;
         for(uint i = 0;i < proLen;i++) {
-            if (dataProviders[dataProviderAddresses[i]].rewardVote == 1 ) {
+            if (dataProviders[dataProviderAddresses[i]].rewardVertifyVote == 1 && dataProviders[dataProviderAddresses[i]].rewardVote == 1 ) {
                 sum = sum + 1;
             }
         }
@@ -313,7 +323,7 @@ contract QodReward {
             }
         }
 
-        emit IsAcceptReward(proLen,sum,isAccept);
+        emit StatisticReward(proLen,sum,isAccept);
         return isAccept;
         
     }
@@ -322,7 +332,7 @@ contract QodReward {
     //解释：理论上这一步应该内部先发起验证、再统计票数（中途拒绝支付gas说明对结果表示不同意）
     function transferMoney() payable public {
         bool IsTransferSuccess = false;
-        bool isAccept = isAcceptReward();
+        bool isAccept = statisticReward();
         if (isAccept == true){
             //  uint balance = address(this).balance;
              uint proLen = dataProviderAddresses.length;

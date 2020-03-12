@@ -435,6 +435,27 @@ class Home extends React.Component {
 
   }
 
+  statisticReward = async () => {
+    const { accounts, contract } = this.state;
+    var statisticRewardLog = {}
+
+    await contract.methods.statisticReward().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("statisticRewardHash==", hash)
+
+        statisticRewardLog.address = accounts[0]
+        statisticRewardLog.statisticRewardHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(statisticRewardLog))
+    cacheTansLog.push(JSON.stringify(statisticRewardLog))
+  }
+
+
   isAccept = async () => {
     const { accounts, contract } = this.state;
     var isAcceptLog = {}
@@ -489,22 +510,39 @@ class Home extends React.Component {
             {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
           </span>
 
-          <span style={{ float: "right" }}>
-            <Button type="primary" onClick={this.calcuRewardC} disabled={!hasSelected} loading={loading}>
-              CalcuRewardByConsumer
+          <span style={{ marginLeft: 8 }}>
+          < Button type="primary" onClick={this.calcuAndSaveQod} loading={loading}>
+            CalcuQAByConsumer
           </Button>
           </span>
-          <span style={{ float: "right" }}>
+
+          <span style={{ marginLeft: 8 }}>
             <FormItem>
               <Input size="default size" prefix={<Icon type="pay-circle" style={{ fontSize: 15, textAlign: "center" }} />} placeholder="Enter incentive amount" value={this.state.rewardValue} onChange={this.onValueChange} />
             </FormItem>
           </span>
 
+         
+            <Button type="primary" onClick={this.calcuRewardC} disabled={!hasSelected} loading={loading}>
+              CalcuRewardByConsumer
+          </Button>
+          <span style={{ float: "right" }}>
+            <Button type="primary" onClick={this.tansfer} disabled={!hasSelected} loading={loading}>
+              Transfer
+          </Button>
+          </span>
+
+          <span style={{ float: "right" }}>
+            <Button type="primary" onClick={this.statisticReward} loading={loading}>
+              statisticReward
+          </Button>
+          </span>
+
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginTop: 36 }}>
           < Button type="primary" onClick={this.calcuAndSaveQod} loading={loading}>
-            CalcuQod
+            CalcuQAByProvider
           </Button>
           <span style={{ marginLeft: 8 }}>
             <Button type="primary" onClick={this.calcuRewardP} loading={loading}>
@@ -517,14 +555,9 @@ class Home extends React.Component {
           </Button>
           </span>
 
-          {/* <span style={{ marginLeft: 8 }}>
-            <Button type="primary" onClick={this.isAccept} loading={loading}>
-              JugeAccept
-          </Button>
-          </span> */}
           <span style={{ marginLeft: 8 }}>
-            <Button type="primary" onClick={this.tansfer} disabled={!hasSelected} loading={loading}>
-              Transfer
+            <Button type="primary" onClick={this.isAccept} loading={loading}>
+              isAccept
           </Button>
           </span>
 
@@ -534,6 +567,83 @@ class Home extends React.Component {
       </div >
     );
   }
+
+
+
+
+  // render() {
+  //   var { loading, selectedRowKeys } = this.state;
+
+
+  //   const rowSelection = {
+  //     selectedRowKeys,
+  //     onChange: this.onSelectChange,
+  //   };
+  //   const hasSelected = selectedRowKeys.length > 0;
+
+  //   return (
+  //     <div>
+  //       <div style={{ marginBottom: 16 }}>
+
+  //         <Button type="primary" onClick={this.SaveIpfsHashInBlockChain} disabled={!hasSelected} loading={loading}>
+  //           SaveIpfsHashInBlockChain
+  //         </Button>
+  //         <span style={{ marginLeft: 8 }}>
+  //           {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
+  //         </span>
+
+  //         <span style={{ float: "right" }}>
+  //           <Button type="primary" onClick={this.calcuRewardC} disabled={!hasSelected} loading={loading}>
+  //             CalcuRewardByConsumer
+  //         </Button>
+  //         </span>
+  //         <span style={{ float: "right" }}>
+  //           <FormItem>
+  //             <Input size="default size" prefix={<Icon type="pay-circle" style={{ fontSize: 15, textAlign: "center" }} />} placeholder="Enter incentive amount" value={this.state.rewardValue} onChange={this.onValueChange} />
+  //           </FormItem>
+  //         </span>
+
+  //       </div>
+
+  //       <div style={{ marginBottom: 16 }}>
+  //         < Button type="primary" onClick={this.calcuAndSaveQod} loading={loading}>
+  //           CalcuQod
+  //         </Button>
+  //         <span style={{ marginLeft: 8 }}>
+  //           <Button type="primary" onClick={this.calcuRewardP} loading={loading}>
+  //             CalcuRewardByProvider
+  //         </Button>
+  //         </span>
+  //         <span style={{ marginLeft: 8 }}>
+  //           <Button type="primary" onClick={this.providerVerifiedReward} loading={loading}>
+  //             providerVerified
+  //         </Button>
+  //         </span>
+
+  //         <span style={{ marginLeft: 8 }}>
+  //           <Button type="primary" onClick={this.statisticReward} loading={loading}>
+  //             statisticReward
+  //         </Button>
+  //         </span>
+
+  //         <span style={{ marginLeft: 8 }}>
+  //           <Button type="primary" onClick={this.isAccept} loading={loading}>
+  //             isAccept
+  //         </Button>
+  //         </span>
+
+  //         <span style={{ marginLeft: 8 }}>
+  //           <Button type="primary" onClick={this.tansfer} disabled={!hasSelected} loading={loading}>
+  //             Transfer
+  //         </Button>
+  //         </span>
+
+  //       </div>
+
+  //       <Table rowSelection={rowSelection} columns={columns} dataSource={this.state.data} />
+  //     </div >
+  //   );
+  // }
 
 }
 
