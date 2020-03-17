@@ -80,7 +80,7 @@ class Home extends React.Component {
     })
   };
 
-  calcuAndSaveQod = () => {
+  calcuAndSaveQodByPro = () => {
     var dataIdArray = []
 
     //取缓存数据
@@ -99,12 +99,12 @@ class Home extends React.Component {
       console.log("qodData==", res);
       console.log("type==", typeof (res));
       //存储到区块链
-      this.saveQodToBlockChain(res);
+      this.saveQodToBlockChainByPro(res);
     })
 
   }
 
-  saveQodToBlockChain = async (qodData) => {
+  saveQodToBlockChainByPro = async (qodData) => {
     const { accounts, contract } = this.state;
 
     //上传至区块链
@@ -116,9 +116,9 @@ class Home extends React.Component {
       console.log("qod==", qod)
       console.log("qodType==", typeof (qod))
 
-      await contract.methods.calcuQod(address, qod).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      await contract.methods.calcuQodByProvider(address, qod).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
         .on('transactionHash', function (hash) {
-          console.log("SaveQodTransHash==", hash)
+          console.log("SaveQodTransHashByPro==", hash)
 
           let logInfo = {}
           logInfo.address = address
@@ -136,6 +136,86 @@ class Home extends React.Component {
     console.log("cacheTansLogQod==", cacheTansLog)
   }
 
+
+
+  calcuAndSaveQodByConsu = () => {
+    var dataIdArray = []
+
+    //取缓存数据
+    var selectedRows = JSON.parse(window.localStorage.getItem("glableSelectData"));
+    console.log("sessionSelectData", selectedRows)
+
+    for (var i in selectedRows) {
+      var data = this.state.data
+      dataIdArray.push(data[selectedRows[i]]._id)
+    }
+    console.log("datasArray==", dataIdArray)
+
+    //计算qod
+    calcuQod(dataIdArray).then(res => {
+      console.log("res==", res)
+      console.log("qodData==", res);
+      console.log("type==", typeof (res));
+      //存储到区块链
+      this.saveQodToBlockChainByConsu(res);
+    })
+
+  }
+
+  saveQodToBlockChainByConsu = async (qodData) => {
+    const { accounts, contract } = this.state;
+
+    //上传至区块链
+    var saveQodLog = []
+    for (var i in qodData) {
+      var address = qodData[i].uaddress
+      console.log("address==", address)
+      var qod = JSON.stringify(qodData[i].qod)
+      console.log("qod==", qod)
+      console.log("qodType==", typeof (qod))
+
+      await contract.methods.calcuQodByConsumer(address, qod).send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+        .on('transactionHash', function (hash) {
+          console.log("SaveQodTransHashByConsu==", hash)
+
+          let logInfo = {}
+          logInfo.address = address
+          logInfo.SaveQodTransHash = hash
+          saveQodLog.push(logInfo)
+
+        })
+        .on('receipt', function (receipt) {
+          console.log("receipt==", receipt)
+        })
+
+    }
+    alert(JSON.stringify(saveQodLog))
+    cacheTansLog.push(JSON.stringify(saveQodLog))
+    console.log("cacheTansLogQod==", cacheTansLog)
+  }
+
+
+  consumerVerifiedQod = async () => {
+    const { accounts, contract } = this.state;
+    //奖金额公布到区块链
+    var consumerVerifiedQodLog = {}
+    console.log("rewardValue==", this.state.rewardValue)
+    console.log("typerewardValue==", typeof (this.state.rewardValue))
+    await contract.methods.consumerVerifiedQod().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("consumerVerifiedQodHash==", hash)
+
+        consumerVerifiedQodLog.address = accounts[0]
+        consumerVerifiedQodLog.verifiedRewardHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(consumerVerifiedQodLog))
+    cacheTansLog.push(JSON.stringify(consumerVerifiedQodLog))
+  }
 
 
   connectBlockChain = async () => {
@@ -319,6 +399,31 @@ class Home extends React.Component {
     cacheTansLog.push(JSON.stringify(calcuRewardByConsumerLog))
   }
 
+
+
+  consumerVerifiedReward = async () => {
+    const { accounts, contract } = this.state;
+    //奖金额公布到区块链
+    var consumerVerifiedRewardLog = {}
+    console.log("rewardValue==", this.state.rewardValue)
+    console.log("typerewardValue==", typeof (this.state.rewardValue))
+    await contract.methods.consumerVerifiedReward().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("consumerVerifiedRewardHash==", hash)
+
+        consumerVerifiedRewardLog.address = accounts[0]
+        consumerVerifiedRewardLog.verifiedRewardByCHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(consumerVerifiedRewardLog))
+    cacheTansLog.push(JSON.stringify(consumerVerifiedRewardLog))
+  }
+
+
   calcuRewardP = () => {
 
     cacheRewardValue = JSON.parse(window.localStorage.getItem("glableRewardValue"));
@@ -360,6 +465,32 @@ class Home extends React.Component {
     alert(JSON.stringify(calcuRewardByProviderLog))
     cacheTansLog.push(JSON.stringify(calcuRewardByProviderLog))
   }
+
+
+
+  providerVertifyQod = async () => {
+    const { accounts, contract } = this.state;
+    //奖金额公布到区块链
+    var providerVerifiedQodLog = {}
+    console.log("rewardValue==", this.state.rewardValue)
+    console.log("typerewardValue==", typeof (this.state.rewardValue))
+    await contract.methods.providerVerifiedQod().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("providerVerifiedQodHash==", hash)
+
+        providerVerifiedQodLog.address = accounts[0]
+        providerVerifiedQodLog.verifiedRewardHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(providerVerifiedQodLog))
+    cacheTansLog.push(JSON.stringify(providerVerifiedQodLog))
+  }
+
+
 
   providerVerifiedReward = async () => {
     const { accounts, contract } = this.state;
@@ -434,6 +565,30 @@ class Home extends React.Component {
     })
 
   }
+
+
+
+  statisticQod = async () => {
+    const { accounts, contract } = this.state;
+    var statisticQodLog = {}
+
+    await contract.methods.statisticQod().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '10' }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+      .on('transactionHash', function (hash) {
+        console.log("statisticQodHash==", hash)
+
+        statisticQodLog.address = accounts[0]
+        statisticQodLog.statisticQodHash = hash
+
+      })
+      .on('receipt', function (receipt) {
+        console.log("receipt==", receipt)
+      })
+
+    alert(JSON.stringify(statisticQodLog))
+    cacheTansLog.push(JSON.stringify(statisticQodLog))
+  }
+
+
 
   statisticReward = async () => {
     const { accounts, contract } = this.state;
@@ -511,8 +666,14 @@ class Home extends React.Component {
           </span>
 
           <span style={{ marginLeft: 8 }}>
-          < Button type="primary" onClick={this.calcuAndSaveQod} loading={loading}>
+          < Button type="primary" onClick={this.calcuAndSaveQodByConsu} loading={loading}>
             CalcuQAByConsumer
+          </Button>
+          </span>
+
+          <span style={{ marginLeft: 8 }}>
+          < Button type="primary" onClick={this.consumerVerifiedQod} loading={loading}>
+            ConsumerVerifiedQod
           </Button>
           </span>
 
@@ -521,7 +682,6 @@ class Home extends React.Component {
               <Input size="default size" prefix={<Icon type="pay-circle" style={{ fontSize: 15, textAlign: "center" }} />} placeholder="Enter incentive amount" value={this.state.rewardValue} onChange={this.onValueChange} />
             </FormItem>
           </span>
-
          
             <Button type="primary" onClick={this.calcuRewardC} disabled={!hasSelected} loading={loading}>
               CalcuRewardByConsumer
@@ -529,6 +689,18 @@ class Home extends React.Component {
           <span style={{ float: "right" }}>
             <Button type="primary" onClick={this.tansfer} disabled={!hasSelected} loading={loading}>
               Transfer
+          </Button>
+          </span>
+
+          <span style={{ marginLeft: 8 }}>
+            <Button type="primary" onClick={this.consumerVerifiedReward} loading={loading}>
+            consumerVerifiedReward
+          </Button>
+          </span>
+
+          <span style={{ float: "right" }}>
+            <Button type="primary" onClick={this.statisticQod} loading={loading}>
+            statisticQod
           </Button>
           </span>
 
@@ -541,9 +713,14 @@ class Home extends React.Component {
         </div>
 
         <div style={{ marginTop: 36 }}>
-          < Button type="primary" onClick={this.calcuAndSaveQod} loading={loading}>
+          < Button type="primary" onClick={this.calcuAndSaveQodByPro} loading={loading}>
             CalcuQAByProvider
           </Button>
+          <span style={{ marginLeft: 8 }}>
+            <Button type="primary" onClick={this.providerVertifyQod} loading={loading}>
+            ProviderVertifyQod
+          </Button>
+          </span>
           <span style={{ marginLeft: 8 }}>
             <Button type="primary" onClick={this.calcuRewardP} loading={loading}>
               CalcuRewardByProvider
@@ -551,7 +728,7 @@ class Home extends React.Component {
           </span>
           <span style={{ marginLeft: 8 }}>
             <Button type="primary" onClick={this.providerVerifiedReward} loading={loading}>
-              providerVerified
+            providerVerifiedReward
           </Button>
           </span>
 

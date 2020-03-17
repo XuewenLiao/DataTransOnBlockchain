@@ -41,11 +41,22 @@ contract QodReward {
     DataConsumer public dataConsumer;
 
     event SaveIpfs(string[] ipfsDataHashArry,address proAddress,bool isSaveSuccess);
-    event SaveQod(address proAddress,string score,bool isSelf);
+
+    event CalcuQodByProvider(address proAddress,string score,bool isSelf);
+    event CalcuQodByConsumer(address consumerAddress,address proAddress,string score);
+    
+    event ProviderVerifiedQod(address proAddress,uint qodVote,bool isAgree);
+    event ConsumerVerifiedQod(address consumerAddress,bool isAgree);
+
     event PublishMoney(uint tMoney);
+
     event CalcuRewardByProvider(address proAddress,uint money,bool isSelf);
     event CalcuRewardByConsumer(address proAddress,uint money);
+
     event ProviderVerifiedReward(address proAddress,uint rewardVote,bool isAgree);
+    event ConsumerVerifiedReward(address consumerAddress,bool isAgree);
+    event StatisticQod(uint proLen,uint sum,bool isAccept);
+
     event IsAcceptReward(uint rewardVote,bool isAccept);
     event StatisticReward(uint proLen,uint sum,bool isAccept);
     event TansferContent(address from,address to,uint value);
@@ -109,8 +120,8 @@ contract QodReward {
     //     return theAesKey;
     // }
     
-    //4、计算qod：将服务器计算的qod暂存起来
-    function calcuQod(address proAddress,string memory score) public {
+    //4.1、provider计算qod：将服务器计算的qod暂存起来
+    function calcuQodByProvider(address proAddress,string memory score) public {
         bool isSelf = false;
         
         if (proAddress == msg.sender) {
@@ -122,49 +133,74 @@ contract QodReward {
             isSelf = false;
         }
 
-        emit SaveQod(proAddress,score,isSelf);
+        emit CalcuQodByProvider(proAddress,score,isSelf);
         
     }
     
-    // //5、验证qod数据：验证自己算的其他provider的qod是否和那些provider自己算的一致。
-    // //若成功，返回自身地址；若失败，返回验证失败的第一个地址。
-      
-    // function verifiedData() public returns (bool isVerifiedSuccess,string memory allFailProAddress) {
-        
-    //     uint otherProviderSum = dataProviders[msg.sender].otherProAddressArry.length;
-    //     otherProAddress = dataProviders[msg.sender].otherProAddressArry;
-    //     for (uint i = 0;i < otherProviderSum;i++) {
-    //         if (keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].qodScore)) == 
-    //             keccak256(abi.encodePacked(dataProviders[otherProAddress[i]].qodScore))) {
-    //             continue;
-    //         }else{
-    //             // string memory failProAddress = addressToString(otherProAddress[i]);
-    //             allFailProAddress = addressToString(otherProAddress[i]).toSlice().concat("+".toSlice());
-    //             dataProviders[msg.sender].qodVote = 0; //验证不通过则本provider的vote为0
-    //             return (false,allFailProAddress);
-    //         }
-    //     }
-    //     dataProviders[msg.sender].qodVote = 1; //验证通过则本provider的vote为1
-    //     return (true,addressToString(msg.sender));
-    // }
+    //4.2 consumer计算qod
+    function calcuQodByConsumer(address proAddress,string memory score) public {
+       qodOfProvider[proAddress] = score;
+       emit CalcuQodByConsumer(msg.sender,proAddress,score);
+    }
+
+    //5.1、验证qod数据：验证自己算的其他provider的qod是否和那些provider自己算的一致。     
+    function providerVerifiedQod() public {
+        bool isAgree = true;
+
+        uint otherProviderSum = dataProviders[msg.sender].otherProAddressArry.length;
+        otherProAddress = dataProviders[msg.sender].otherProAddressArry;
+        for (uint i = 0;i < otherProviderSum;i++) {
+            if (keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].qodScore)) == 
+                keccak256(abi.encodePacked(dataProviders[otherProAddress[i]].qodScore))) {
+                dataProviders[msg.sender].qodVote = 1;
+                continue;
+            }else{
+                dataProviders[msg.sender].qodVote = 0; //验证不通过则本provider的vote为0
+                isAgree = false;
+                break;
+            }
+        }
+        emit ProviderVerifiedQod(msg.sender,dataProviders[msg.sender].qodVote,isAgree);
+    }
     
-    // //6、统计同意票数（公共方法：任何人可调用，相当于将投票结果全网公布）
-    // function agree() public returns (bool isAllAgree){
-    //     uint proLen = dataProviderAddresses.length;
-    //     uint sum = 0;
-    //     for(uint i = 0;i < proLen;i++) {
-    //         if (dataProviders[dataProviderAddresses[i]].qodVote == 1 ) {
-    //             sum = sum + 1;
-    //         }
-    //     }
+    // 5.2 consumer验证qod数据
+     
+    function consumerVerifiedQod() public {
+		bool isAgree = true;
+        uint proLen = dataProviderAddresses.length;
+        for (uint i = 0;i < proLen;i++) {
+            if (keccak256(abi.encodePacked(qodOfProvider[dataProviderAddresses[i]])) == 
+                keccak256(abi.encodePacked(dataProviders[dataProviderAddresses[i]].qodScore))) {
+                continue;
+            }else{
+                isAgree = false;
+			    break;
+            }
+        }
+        emit ConsumerVerifiedQod(msg.sender,isAgree);
+    }
+
+    //6、统计同意票数（公共方法：任何人可调用，相当于将投票结果全网公布）
+    function statisticQod() public returns (bool){
+        bool isAccept = false;
+        uint proLen = dataProviderAddresses.length;
+        uint sum = 0;
+        for(uint i = 0;i < proLen;i++) {
+            if (dataProviders[dataProviderAddresses[i]].qodVote == 1 ) {
+                sum = sum + 1;
+            }
+        }
         
-    //     //若同意票数为总provider数目
-    //     if (sum == proLen) {
-    //         return true;
-    //     }else{
-    //         return false;
-    //     }
-    // }
+        //若同意票数为总provider数目
+        if (sum == proLen) {
+            isAccept = true;
+        }else{
+            isAccept = false;
+        }
+
+        emit StatisticQod(proLen,sum,isAccept);
+        return isAccept;
+    }
     
     // //7、Consumer获得数据qod；公布奖金额
     // //7.1 获取provider的qod
@@ -205,29 +241,7 @@ contract QodReward {
     }
     
     // //9、验证激励金额
-    // //9.1 provider函数
-    // // function providerVerifiedReward() public returns (bool isVerifiedSuccess) {
-        
-    // //     uint otherProviderSum = dataProviders[msg.sender].otherProAddressArry.length;
-    // //     otherProAddress = dataProviders[msg.sender].otherProAddressArry;
-    // //     for (uint i = 0;i < otherProviderSum;i++) {
-    // //         if (keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].pmoney)) == 
-    // //             keccak256(abi.encodePacked(dataProviders[otherProAddress[i]].pmoney)) && 
-    // //             keccak256(abi.encodePacked(dataProviders[msg.sender].otherDataProvider[otherProAddress[i]].pmoney)) == 
-    // //             keccak256(abi.encodePacked(moneyOfProvider[otherProAddress[i]])) && 
-    // //             keccak256(abi.encodePacked(dataProviders[msg.sender].pmoney)) == 
-    // //             keccak256(abi.encodePacked(moneyOfProvider[msg.sender]))) {
-                    
-    // //             continue;
-    // //         }else{
-    // //             dataProviders[msg.sender].rewardVote = 0;
-    // //             return false;
-    // //         }
-    // //     }
-    // //     dataProviders[msg.sender].rewardVote = 1;
-    // //     return true;
-    // // }
-    
+    // //9.1 provider函数  
      function providerVerifiedReward() public {
         bool isAgree = true;
 
@@ -256,34 +270,20 @@ contract QodReward {
     }
     
     
-    // //9.2 consumer函数
-    // // function consumerVerifiedReward() public returns (bool isVerifiedSuccess,address failProAddress) {
-    // //     uint proLen = dataProviderAddresses.length;
-    // //     for (uint i = 0;i < proLen;i++) {
-    // //         if (moneyOfProvider[dataProviderAddresses[i]] == dataProviders[dataProviderAddresses[i]].pmoney) {
-    // //             continue;
-    // //         }else{
-    // //             failProAddress = dataProviderAddresses[i];
-    // //             return (false,failProAddress);
-    // //         }
-    // //     }
-    // //     return (true,msg.sender);
-    // // }
-    
-    
-    //  function consumerVerifiedReward() public returns (bool isVerifiedSuccess,string memory allFailProAddress) {
-    //     uint proLen = dataProviderAddresses.length;
-    //     for (uint i = 0;i < proLen;i++) {
-    //         if (moneyOfProvider[dataProviderAddresses[i]] == dataProviders[dataProviderAddresses[i]].pmoney) {
-    //             continue;
-    //         }else{
-    //             // failProAddress = dataProviderAddresses[i];
-    //             allFailProAddress = addressToString(otherProAddress[i]).toSlice().concat("+".toSlice());
-    //             return (false,allFailProAddress);
-    //         }
-    //     }
-    //     return (true,addressToString(msg.sender));
-    // }
+    // 9.2 consumer函数  
+     function consumerVerifiedReward() public {
+        bool isAgree = true;
+        uint proLen = dataProviderAddresses.length;
+        for (uint i = 0;i < proLen;i++) {
+            if (moneyOfProvider[dataProviderAddresses[i]] == dataProviders[dataProviderAddresses[i]].pmoney) {
+                continue;
+            }else{
+                isAgree = false;
+                break;
+            }
+        }
+        emit ConsumerVerifiedReward(msg.sender,isAgree);
+    }
     
     
     //10、数据提供者投票表决是否接受目前的激励金额
