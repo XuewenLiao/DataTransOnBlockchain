@@ -122,7 +122,7 @@ class Home extends React.Component {
 
           let logInfo = {}
           logInfo.address = address
-          logInfo.SaveQodTransHash = hash
+          logInfo.SaveQodTransHashByPro = hash
           saveQodLog.push(logInfo)
 
         })
@@ -180,7 +180,7 @@ class Home extends React.Component {
 
           let logInfo = {}
           logInfo.address = address
-          logInfo.SaveQodTransHash = hash
+          logInfo.SaveQodTransHashByConsu = hash
           saveQodLog.push(logInfo)
 
         })
@@ -206,7 +206,7 @@ class Home extends React.Component {
         console.log("consumerVerifiedQodHash==", hash)
 
         consumerVerifiedQodLog.address = accounts[0]
-        consumerVerifiedQodLog.verifiedRewardHash = hash
+        consumerVerifiedQodLog.consumerVerifiedQodHash = hash
 
       })
       .on('receipt', function (receipt) {
@@ -412,7 +412,7 @@ class Home extends React.Component {
         console.log("consumerVerifiedRewardHash==", hash)
 
         consumerVerifiedRewardLog.address = accounts[0]
-        consumerVerifiedRewardLog.verifiedRewardByCHash = hash
+        consumerVerifiedRewardLog.consumerVerifiedRewardHash = hash
 
       })
       .on('receipt', function (receipt) {
@@ -479,7 +479,7 @@ class Home extends React.Component {
         console.log("providerVerifiedQodHash==", hash)
 
         providerVerifiedQodLog.address = accounts[0]
-        providerVerifiedQodLog.verifiedRewardHash = hash
+        providerVerifiedQodLog.providerVerifiedQodHash = hash
 
       })
       .on('receipt', function (receipt) {
@@ -503,7 +503,7 @@ class Home extends React.Component {
         console.log("providerVerifiedRewardHash==", hash)
 
         providerVerifiedRewardLog.address = accounts[0]
-        providerVerifiedRewardLog.verifiedRewardHash = hash
+        providerVerifiedRewardLog.providerVerifiedRewardHash = hash
 
       })
       .on('receipt', function (receipt) {
@@ -518,7 +518,7 @@ class Home extends React.Component {
     const { accounts, contract } = this.state;
     var transferLog = {}
 
-    await contract.methods.transferMoney().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '80', value: 20 }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
+    await contract.methods.transferMoney().send({ from: this.state.accounts[0], gas: 3000000, gasPrice: '80', value: 200 }) //from: '0x15f13625bf2aE99CebF1BE776e18835bF93Ea623'
       .on('transactionHash', function (hash) {
         console.log("transferHash==", hash)
 
@@ -718,7 +718,7 @@ class Home extends React.Component {
           </Button>
           <span style={{ marginLeft: 8 }}>
             <Button type="primary" onClick={this.providerVertifyQod} loading={loading}>
-            ProviderVertifyQod
+            ProviderVertifiedQod
           </Button>
           </span>
           <span style={{ marginLeft: 8 }}>
